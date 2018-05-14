@@ -7,17 +7,11 @@
 
 
 #include <QtWidgets>
-#include <QApplication>
 #include <QMainWindow>
 #include <QPushButton>
 #include <QFileDialog>
-#include <iostream>
-#include <QtWidgets/QVBoxLayout>
-#include <QDialog>
-#include <QtWidgets/QTextEdit>
-#include <QtWidgets/QGroupBox>
-#include <QtWidgets/QCheckBox>
 #include "ImgProcessing.h"
+#include "ImageFrame/ImgProcessing.h"
 
 class Gui : public QMainWindow {
 Q_OBJECT
@@ -45,6 +39,7 @@ private:
     QPushButton *view_image_btn;
     QStringList inputFiles;
     QLineEdit *percentageInput;
+    QLineEdit *fileExtension;
     QCheckBox *rewriteFiles_cbox;
     QWidget *mainWidget;
     QHBoxLayout *mainLayout;
@@ -54,6 +49,5 @@ private:
     QTextEdit *textOutput;
     QVBoxLayout *controllLayout;
 };
-
 
 #endif //IMAGEFRAME_WIN_H

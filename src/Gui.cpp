@@ -3,7 +3,9 @@
 //
 
 #include "ImageFrame/Gui.h"
-#include "ImageFrame/ImgProcessing.h"
+#define DEFAULT_FILE_EXTENSION ".jpg"
+#define DEFAULT_FRAME_PERCENTAGE "3"
+#define DEFAULT_KEEP_ORIGINAL_FILES true
 
 Gui::Gui(QWidget *parent) {
 
@@ -24,6 +26,13 @@ Gui::Gui(QWidget *parent) {
 
     // add widget to MainWindow
     this->setCentralWidget(mainWidget);
+
+    // set implicit values for rendering images
+    imgProcessing.setFileExtension(DEFAULT_FILE_EXTENSION);
+    imgProcessing.setPercentage((const float &) DEFAULT_FRAME_PERCENTAGE);
+    imgProcessing.setKeepOldFiles(DEFAULT_KEEP_ORIGINAL_FILES);
+
+    //imgProcessing.create("nev");
 }
 
 void Gui::handleBrowseFiles() {
@@ -31,7 +40,7 @@ void Gui::handleBrowseFiles() {
             this,
             "Select one or more inputFiles to open",
             "/home/jakub/",
-            "Images (*.png *.jpg *.cr2)");
+            "Images (*.png *.jpg)");
 
     textOutput->clear();
     textOutput->append("Inputed images:");
@@ -50,6 +59,7 @@ void Gui::handelRenderImages() {
         return;
     }
 
+    // rewriting original files
     if (rewriteFiles_cbox->checkState()) {
         imgProcessing.setKeepOldFiles(false);
     } else {
@@ -58,6 +68,9 @@ void Gui::handelRenderImages() {
 
     // set percentage of frame for processing
     imgProcessing.setPercentage(percentageInput->text().toFloat());
+
+    // set file extension
+    imgProcessing.setFileExtension(fileExtension->text().toStdString());
 
     // prepare filenames and process them
     std::vector<std::string> files;
@@ -84,7 +97,8 @@ void Gui::createControllPanel() {
     connect(view_image_btn, SIGNAL(released()), this, SLOT(handleViewImage()));
 
     // crete percentage input
-    percentageInput = new QLineEdit("3");
+    percentageInput = new QLineEdit(DEFAULT_FRAME_PERCENTAGE);
+    fileExtension = new QLineEdit(DEFAULT_FILE_EXTENSION);
 
     // crete checkbox
     rewriteFiles_cbox = new QCheckBox("Rewrite original inputFiles");
@@ -92,7 +106,10 @@ void Gui::createControllPanel() {
     // create layout with creted widgets
     controllLayout = new QVBoxLayout;
     controllLayout->addWidget(browse_btn);
+    controllLayout->addWidget(new QLabel("Percentage of frame:"));
     controllLayout->addWidget(percentageInput);
+    controllLayout->addWidget(new QLabel("File extension:"));
+    controllLayout->addWidget(fileExtension);
     controllLayout->addWidget(color_btn);
     controllLayout->addWidget(rewriteFiles_cbox);
     controllLayout->addWidget(view_image_btn);
@@ -127,11 +144,12 @@ void Gui::handleViewImage() {
     }
 
     // prepare image for Qt
-    QImage image = imgProcessing.viewImage(inputFiles.back().toStdString());
+    //QImage image = imgProcessing.viewImage(inputFiles.back().toStdString());
+    QImage *image = imgProcessing.toQImage(inputFiles.back().toStdString());
 
     QDialog *viewImage = new QDialog();
     QLabel *imageLabel = new QLabel(viewImage);
-    imageLabel->setPixmap(QPixmap::fromImage(image));
+    imageLabel->setPixmap(QPixmap::fromImage(*image));
     imageLabel->setMinimumSize(800, 600);
     imageLabel->setMaximumSize(1920, 1080);
     viewImage->exec();
