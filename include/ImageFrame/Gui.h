@@ -13,6 +13,10 @@
 #include "ImgProcessing.h"
 #include "ImageFrame/ImgProcessing.h"
 
+#define DEFAULT_FILE_EXTENSION ".jpg"
+#define DEFAULT_FRAME_PERCENTAGE "3"
+#define DEFAULT_KEEP_ORIGINAL_FILES true
+
 class Gui : public QMainWindow {
 Q_OBJECT
 

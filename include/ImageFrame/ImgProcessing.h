@@ -18,6 +18,7 @@
 #include <QtGui/QPixmap>
 
 #define ADD_TO_FILENAME "_ram"
+#define NUM_OF_THREADS 8
 
 class ImgProcessing {
 public:
@@ -36,13 +37,11 @@ public:
 
     QImage *toQImage(const std::string &filename);
 
-    void create(std::string filename);
-
 private:
     static void addFrame(std::string filename,
-                         float percentage,
-                         bool keepOldFiles,
-                         int R, int G, int B,
+                         const float &percentage,
+                         const bool &keepOldFiles,
+                         const int &R, const int &G, const int &B,
                           const std::string &fileExtension);
 
     int R = 255, G = 255, B = 255;

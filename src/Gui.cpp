@@ -3,9 +3,6 @@
 //
 
 #include "ImageFrame/Gui.h"
-#define DEFAULT_FILE_EXTENSION ".jpg"
-#define DEFAULT_FRAME_PERCENTAGE "3"
-#define DEFAULT_KEEP_ORIGINAL_FILES true
 
 Gui::Gui(QWidget *parent) {
 
@@ -31,15 +28,13 @@ Gui::Gui(QWidget *parent) {
     imgProcessing.setFileExtension(DEFAULT_FILE_EXTENSION);
     imgProcessing.setPercentage((const float &) DEFAULT_FRAME_PERCENTAGE);
     imgProcessing.setKeepOldFiles(DEFAULT_KEEP_ORIGINAL_FILES);
-
-    //imgProcessing.create("nev");
 }
 
 void Gui::handleBrowseFiles() {
     inputFiles = QFileDialog::getOpenFileNames(
             this,
             "Select one or more inputFiles to open",
-            "/home/jakub/",
+            "/home/",
             "Images (*.png *.jpg)");
 
     textOutput->clear();
@@ -58,6 +53,9 @@ void Gui::handelRenderImages() {
         msgBox.exec();
         return;
     }
+
+    textOutput->clear();
+    textOutput->append(">>> Processing <<<");
 
     // rewriting original files
     if (rewriteFiles_cbox->checkState()) {
