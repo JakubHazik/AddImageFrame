@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(ImageFrame)
 
-find_package(OpenCV REQUIRED)
+#find_package(OpenCV REQUIRED)
 find_package(Threads REQUIRED)
 find_package(ImageMagick COMPONENTS Magick++)
 #QT
@@ -29,8 +29,8 @@ add_executable(ImageFrame
         ${SOURCE_FILES})
 
 target_link_libraries(ImageFrame
-        ${OpenCV_LIBS}
-        ${Boost_LIBRARIES}
+        #${OpenCV_LIBS}
+        #${Boost_LIBRARIES}
         ${CMAKE_THREAD_LIBS_INIT}
         ${ImageMagick_LIBRARIES}
         Qt5::Core
