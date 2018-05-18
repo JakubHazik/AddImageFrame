@@ -15,7 +15,10 @@
 
 #define DEFAULT_FILE_EXTENSION ".jpg"
 #define DEFAULT_FRAME_PERCENTAGE "3"
-#define DEFAULT_KEEP_ORIGINAL_FILES true
+#define DEFAULT_IMAGE_WIDTH "15"
+#define DEFAULT_IMAGE_HEIGHT "10"
+#define DEFAULT_FRAME_WIDTH "4"
+#define DEFAULT_REWRITE_ORIGINAL_FILES false
 
 class Gui : public QMainWindow {
 Q_OBJECT
@@ -31,16 +34,23 @@ private slots:
 
     void handleColorSettings();
 
-    void handleViewImage();
+    void handleQuitApp();
 
 private:
     void createControllPanel();
 
+    QWidget *createPercentageWidget();
+
     void createLogPanel();
 
+    QRadioButton *percentage_rbtn;
+    QRadioButton *absolute_rbtn;
+    QLineEdit *imageWidth;
+    QLineEdit *imageHeight;
+    QLineEdit *frameWidth;
     ImgProcessing imgProcessing;
     QPushButton *color_btn;
-    QPushButton *view_image_btn;
+    QPushButton *quit_btn;
     QStringList inputFiles;
     QLineEdit *percentageInput;
     QLineEdit *fileExtension;

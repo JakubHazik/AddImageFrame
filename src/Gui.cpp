@@ -23,11 +23,6 @@ Gui::Gui(QWidget *parent) {
 
     // add widget to MainWindow
     this->setCentralWidget(mainWidget);
-
-    // set implicit values for rendering images
-    imgProcessing.setFileExtension(DEFAULT_FILE_EXTENSION);
-    imgProcessing.setPercentage((const float &) DEFAULT_FRAME_PERCENTAGE);
-    imgProcessing.setKeepOldFiles(DEFAULT_KEEP_ORIGINAL_FILES);
 }
 
 void Gui::handleBrowseFiles() {
@@ -57,6 +52,9 @@ void Gui::handelRenderImages() {
     textOutput->clear();
     textOutput->append(">>> Processing <<<");
 
+    // set image size
+    imgProcessing.setImageSize(imageWidth->text().toFloat(), imageHeight->text().toFloat());
+
     // rewriting original files
     if (rewriteFiles_cbox->checkState()) {
         imgProcessing.setKeepOldFiles(false);
@@ -65,7 +63,8 @@ void Gui::handelRenderImages() {
     }
 
     // set percentage of frame for processing
-    imgProcessing.setPercentage(percentageInput->text().toFloat());
+    //imgProcessing.setPercentage(percentageInput->text().toFloat());
+    imgProcessing.setFrameWidth(frameWidth->text().toFloat());
 
     // set file extension
     imgProcessing.setFileExtension(fileExtension->text().toStdString());
@@ -87,35 +86,101 @@ void Gui::createControllPanel() {
     browse_btn = new QPushButton("Add images");
     render_btn = new QPushButton("Render");
     color_btn = new QPushButton("Set color");
-    view_image_btn = new QPushButton("View image");
+    quit_btn = new QPushButton("Quit");
     // connect buttons
     connect(browse_btn, SIGNAL(released()), this, SLOT(handleBrowseFiles()));
     connect(render_btn, SIGNAL(released()), this, SLOT(handelRenderImages()));
     connect(color_btn, SIGNAL(released()), this, SLOT(handleColorSettings()));
-    connect(view_image_btn, SIGNAL(released()), this, SLOT(handleViewImage()));
+    connect(quit_btn, SIGNAL(released()), this, SLOT(handleQuitApp()));
 
     // crete percentage input
-    percentageInput = new QLineEdit(DEFAULT_FRAME_PERCENTAGE);
     fileExtension = new QLineEdit(DEFAULT_FILE_EXTENSION);
 
     // crete checkbox
     rewriteFiles_cbox = new QCheckBox("Rewrite original inputFiles");
+    rewriteFiles_cbox->setChecked(DEFAULT_REWRITE_ORIGINAL_FILES);
 
     // create layout with creted widgets
     controllLayout = new QVBoxLayout;
     controllLayout->addWidget(browse_btn);
-    controllLayout->addWidget(new QLabel("Percentage of frame:"));
-    controllLayout->addWidget(percentageInput);
+    controllLayout->addWidget(createPercentageWidget());
+    //controllLayout->addWidget(createFrameSizeWidget());
     controllLayout->addWidget(new QLabel("File extension:"));
     controllLayout->addWidget(fileExtension);
     controllLayout->addWidget(color_btn);
     controllLayout->addWidget(rewriteFiles_cbox);
-    controllLayout->addWidget(view_image_btn);
     controllLayout->addWidget(render_btn);
+    controllLayout->addWidget(quit_btn);
 
     // create widget with layouted buttons
     controllPanel = new QWidget();
     controllPanel->setLayout(controllLayout);
+}
+
+QWidget *Gui::createPercentageWidget() {
+    percentage_rbtn= new QRadioButton("Percentage");
+    percentageInput = new QLineEdit(DEFAULT_FRAME_PERCENTAGE);
+    absolute_rbtn= new QRadioButton("Absolute size");
+    absolute_rbtn->setChecked(true);
+    imageHeight = new QLineEdit(DEFAULT_IMAGE_HEIGHT);
+    imageWidth = new QLineEdit(DEFAULT_IMAGE_WIDTH);
+    frameWidth = new QLineEdit(DEFAULT_FRAME_WIDTH);
+
+    QGroupBox *radioBtnBox = new QGroupBox("Select type",this);
+
+    QVBoxLayout *layoutV;
+    QHBoxLayout *layoutH;
+    QWidget *widget;
+
+    // vertical layout
+    {
+        layoutV = new QVBoxLayout;
+
+        //percentage radiobutton
+        layoutV->addWidget(percentage_rbtn);
+
+        // horizontal percentage input
+        {
+            layoutH = new QHBoxLayout;
+            layoutH->addWidget(new QLabel("Percentage of frame: [%]"));
+            layoutH->addWidget(percentageInput);
+            widget = new QWidget();
+            widget->setLayout(layoutH);
+        }
+        layoutV->addWidget(widget);
+
+        //absolute radiobutton
+        layoutV->addWidget(absolute_rbtn);
+
+        // horizontal Image Size
+        {
+            layoutH = new QHBoxLayout;
+            layoutH->addWidget(new QLabel("Image size:"));
+            layoutH->addWidget(new QLabel("W[cm]"));
+            layoutH->addWidget(imageWidth);
+            layoutH->addWidget(new QLabel("H[cm]"));
+            layoutH->addWidget(imageHeight);
+            widget = new QWidget();
+            widget->setLayout(layoutH);
+            layoutV->addWidget(widget);
+        }
+        layoutV->addWidget(widget);
+
+        // horizontal Frame Width
+        {
+            layoutH = new QHBoxLayout;
+            layoutH->addWidget(new QLabel("Frame width[mm]"));
+            layoutH->addWidget(frameWidth);
+            widget = new QWidget();
+            widget->setLayout(layoutH);
+            layoutV->addWidget(widget);
+        }
+        layoutV->addWidget(widget);
+    }
+
+    radioBtnBox->setLayout(layoutV);
+    radioBtnBox->setFlat(true);
+    return radioBtnBox;
 }
 
 void Gui::createLogPanel() {
@@ -123,32 +188,14 @@ void Gui::createLogPanel() {
     textOutput = new QTextEdit();
     textOutput->setMinimumSize(20, 100);
     textOutput->setReadOnly(true);
-    //textOutput->append("askdasda");
 }
 
 void Gui::handleColorSettings() {
-    QColorDialog *c = new QColorDialog();
+    auto *c = new QColorDialog();
     c->exec();
     imgProcessing.setFrameColor(c->selectedColor().red(), c->selectedColor().green(), c->selectedColor().blue());
 }
 
-void Gui::handleViewImage() {
-    // check if any file is added
-    if (inputFiles.empty()) {
-        QMessageBox msgBox;
-        msgBox.setText("No input files for rendering");
-        msgBox.exec();
-        return;
-    }
-
-    // prepare image for Qt
-    //QImage image = imgProcessing.viewImage(inputFiles.back().toStdString());
-    QImage *image = imgProcessing.toQImage(inputFiles.back().toStdString());
-
-    QDialog *viewImage = new QDialog();
-    QLabel *imageLabel = new QLabel(viewImage);
-    imageLabel->setPixmap(QPixmap::fromImage(*image));
-    imageLabel->setMinimumSize(800, 600);
-    imageLabel->setMaximumSize(1920, 1080);
-    viewImage->exec();
+void Gui::handleQuitApp() {
+    QCoreApplication::quit();
 }

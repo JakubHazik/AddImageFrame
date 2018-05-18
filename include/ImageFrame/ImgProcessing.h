@@ -6,17 +6,14 @@
 #define IMAGEFRAME_IMGPROCESSING_H
 
 #include <iostream>
-//#include <opencv2/core/core.hpp>
-//#include <opencv2/highgui/highgui.hpp>
 #include <thread>
 #include <QtGui/QImage>
 #include <QImage>
 #include <QFile>
-//#include <opencv2/imgproc/types_c.h>
-//#include <opencv2/imgproc/imgproc.hpp>
 #include <Magick++.h>
 #include <QtGui/QPixmap>
 #include <sstream>
+#include <exception>
 
 #define ADD_TO_FILENAME "_ram"
 #define NUM_OF_THREADS 8
@@ -34,9 +31,9 @@ public:
 
     void setFileExtension(const std::string &extension);
 
-    //QImage viewImage(const std::string &filename);
+    void setFrameWidth(const float &width);
 
-    QImage *toQImage(const std::string &filename);
+    void setImageSize(const float &width, const float &height);
 
 private:
     static void addFrame(std::string filename,
@@ -47,9 +44,10 @@ private:
 
     int R = 255, G = 255, B = 255;
     float percentage = 3;
+    float image_w = 0;
+    float image_h = 0;
     bool keepOldFiles = true;
     std::string fileExtension = ".jpg";
 };
-
 
 #endif //IMAGEFRAME_IMGPROCESSING_H
