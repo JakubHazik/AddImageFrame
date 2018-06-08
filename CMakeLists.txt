@@ -81,31 +81,17 @@ target_link_libraries(ImageFrame
 
 
 if (UNIX)
-#        install(
-#                TARGETS ImageFrame
-#                RUNTIME DESTINATION bin
-#                LIBRARY DESTINATION lib
-#        )
 
-   # install(CODE ${CMAKE_COMMAND} -E copy_if_different ${var} ${IMAGE_FRAME_INSTALL_DIR}/bin/lib)
-
-
+#install(CODE "
+#        include(GetPrerequisites)
+#        get_prerequisites(${CMAKE_SOURCE_DIR}/bin/ImageFrame var 0 1 \"\" \"\")
+#        ")
 #
-#add_custom_command(TARGET ImageFrame POST_BUILD
-#        COMMAND ${CMAKE_COMMAND}
-#        -E copy_if_different ${var} ${CMAKE_SOURCE_DIR}/bin/lib)
+#    #message(${var})
 #
-#
-install(CODE "
-        include(GetPrerequisites)
-        get_prerequisites(${CMAKE_SOURCE_DIR}/bin/ImageFrame var 0 1 \"\" \"\")
-        ")
-
-    #message(${var})
-
-    install(PROGRAMS ${var}
-            DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin/lib
-            )
+#    install(PROGRAMS ${var}
+#            DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin/lib
+#            )
 
 #
 #file(INSTALL ${var}
@@ -118,16 +104,21 @@ install(PROGRAMS bin/ImageFrame
 install(FILES icons/icon.png
         DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/icons)
 
+file(GLOB ImageMagickLib "${ImageMagick_LIBRARIES}*")
+    install(FILES ${ImageMagickLib}
+            DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin/lib)
 
+    # install Qt libraries
+get_target_property(QtCore_location Qt5::Core LOCATION)
+get_filename_component(QT5_LIBPATH ${QtCore_location} PATH)
+file(GLOB Qt5Core_LIBRARIES "${QT5_LIBPATH}/libQt5Core.so*")
+file(GLOB Qt5Gui_LIBRARIES "${QT5_LIBPATH}/libQt5Gui.so*")
+file(GLOB Qt5Widgets_LIBRARIES "${QT5_LIBPATH}/libQt5Widgets.so*")
+install(FILES ${Qt5Core_LIBRARIES} DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin/lib)
+install(FILES ${Qt5Gui_LIBRARIES} DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin/lib)
+install(FILES ${Qt5Widgets_LIBRARIES} DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin/lib)
 
-
-
-#        install(FILES
-#                $<TARGET_FILE:Qt5::Widgets>
-#                $<TARGET_FILE:Qt5::Core>
-#                $<TARGET_FILE:Qt5::Gui>
-#                ${ImageMagick_LIBRARIES}
-#                DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin/lib)
+    
 #
 #        install(TARGETS ImageFrame
 #                RUNTIME DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin COMPONENT ${ImageMagick_LIBRARIES} #libraries
