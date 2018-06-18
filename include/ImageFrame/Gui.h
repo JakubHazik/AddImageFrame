@@ -37,7 +37,7 @@ private slots:
     void handleQuitApp();
 
 private:
-    void createControllPanel();
+    void createControlPanel();
 
     QWidget *createPercentageWidget();
 

@@ -9,7 +9,7 @@ Gui::Gui(QWidget *parent) {
     setWindowTitle("Application for add frame");
     setMinimumSize(200, 200);
 
-    createControllPanel();
+    createControlPanel();
     createLogPanel();
 
     // crete main layout
@@ -62,9 +62,12 @@ void Gui::handelRenderImages() {
         imgProcessing.setKeepOldFiles(true);
     }
 
-    // set percentage of frame for processing
-    //imgProcessing.setPercentage(percentageInput->text().toFloat());
-    imgProcessing.setFrameWidth(frameWidth->text().toFloat());
+    // set percentage or absolute width of frame for processing
+    if (percentage_rbtn->isChecked()) {
+        imgProcessing.setPercentage(percentageInput->text().toFloat());
+    }else if (absolute_rbtn->isChecked()) {
+        imgProcessing.setFrameWidth(frameWidth->text().toFloat());
+    }
 
     // set file extension
     imgProcessing.setFileExtension(fileExtension->text().toStdString());
@@ -81,7 +84,7 @@ void Gui::handelRenderImages() {
     textOutput->append(">>> Successful processed <<<");
 }
 
-void Gui::createControllPanel() {
+void Gui::createControlPanel() {
     //create buttons
     browse_btn = new QPushButton("Add images");
     render_btn = new QPushButton("Render");
@@ -194,6 +197,9 @@ void Gui::handleColorSettings() {
     auto *c = new QColorDialog();
     c->exec();
     imgProcessing.setFrameColor(c->selectedColor().red(), c->selectedColor().green(), c->selectedColor().blue());
+    std::cout<<c->selectedColor().red()<<std::endl;
+    std::cout<<c->selectedColor().green()<<std::endl;
+    std::cout<<c->selectedColor().blue()<<std::endl;
 }
 
 void Gui::handleQuitApp() {
