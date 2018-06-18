@@ -1,21 +1,16 @@
 cmake_minimum_required(VERSION 3.5)
 project(ImageFrame)
 
-
-# set paths
+# set variables
 set(IMAGE_FRAME_INSTALL_DIR /opt/ImageFrame)
 set(CMAKE_INSTALL_RPATH "${IMAGE_FRAME_INSTALL_DIR}/bin/lib")
-#set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 set(CMAKE_INSTALL_PREFIX ${IMAGE_FRAME_INSTALL_DIR}/bin/lib)
-
-#message(${CMAKE_INSTALL_RPATH})
 set(LIB_DIR ${CMAKE_SOURCE_DIR}/bin/lib)
 
-
-
-
 find_package(Threads REQUIRED)
-find_package(ImageMagick COMPONENTS Magick++)
+find_package(ImageMagick COMPONENTS Magick++ REQUIRED)
 #QT
 set(CMAKE_AUTOMOC ON)
 find_package(Qt5 REQUIRED COMPONENTS Gui Core Widgets)
@@ -36,32 +31,10 @@ set(SOURCE_FILES
 
 include_directories(include ${ImageMagick_INCLUDE_DIRS})
 
-
-#SET(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
-#SET(BUILD_SHARED_LIBRARIES OFF)
-#SET(CMAKE_EXE_LINKER_FLAGS "-static")
-#set_target_properties(ImageFrame PROPERTIES LINK_FLAGS "-static")
-
 add_executable(ImageFrame
         src/main.cpp
         ${INCLUDE_FILES}
         ${SOURCE_FILES})
-
-#add_custom_target(createLibFolder ALL
-#        COMMAND ${CMAKE_COMMAND} -E make_directory ${LIB_DIR})
-#add_custom_target(copyLibraries
-#        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-#        $<TARGET_FILE:Qt5::Widgets>
-#        $<TARGET_FILE:Qt5::Gui>
-#        $<TARGET_FILE:Qt5::Core>
-#        ${ImageMagick_LIBRARIES}
-#        ${ImageMagick_INCLUDE_DIRS}
-#        ${LIB_DIR})
-#add_dependencies(ImageFrame createLibFolder copyLibraries)
-
-
-#link_directories(${CMAKE_INSTALL_RPATH})
-#add_library(l SHARED ${ImageMagick_LIBRARIES} )
 
 #https://stackoverflow.com/questions/41912734/deploy-icu-libraries-when-linking-a-cmake-project-with-qt5
 target_link_libraries(ImageFrame
@@ -70,45 +43,23 @@ target_link_libraries(ImageFrame
         Qt5::Core
         Qt5::Widgets)
 
-#message(${ImageMagick_LIBRARIES})
-#set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR})
-
-#install(CODE "
-#    include(BundleUtilities)
-#    fixup_bundle(${CMAKE_SOURCE_DIR}/bin/ImageFrame ${ImageMagick_LIBRARIES} \"\" )
-#    " COMPONENT Runtime)
-
-
-
 if (UNIX)
-
-#install(CODE "
-#        include(GetPrerequisites)
-#        get_prerequisites(${CMAKE_SOURCE_DIR}/bin/ImageFrame var 0 1 \"\" \"\")
-#        ")
-#
-#    #message(${var})
-#
-#    install(PROGRAMS ${var}
-#            DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin/lib
-#            )
-
-#
-#file(INSTALL ${var}
-#        DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin/lib)
-#
-
 install(PROGRAMS bin/ImageFrame
         DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin)
 
 install(FILES icons/icon.png
         DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/icons)
 
-file(GLOB ImageMagickLib "${ImageMagick_LIBRARIES}*")
-    install(FILES ${ImageMagickLib}
-            DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin/lib)
+# install ImageMagick libraries
+get_filename_component(ImageMagick_LIBPATH ${ImageMagick_LIBRARIES} PATH)
+file(GLOB ImageMagickCore_LIBRARIES "${ImageMagick_LIBPATH}/libMagickCore-6.Q16.so*")
+file(GLOB ImageMagickWand_LIBRARIES "${ImageMagick_LIBPATH}/libMagickWand-6.Q16.so*")
+file(GLOB ImageMagick++_LIBRARIES "${ImageMagick_LIBPATH}/libMagick++-6.Q16.so*")
+install(FILES ${ImageMagickCore_LIBRARIES} DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin/lib)
+install(FILES ${ImageMagickWand_LIBRARIES} DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin/lib)
+install(FILES ${ImageMagick++_LIBRARIES} DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin/lib)
 
-    # install Qt libraries
+# install Qt libraries
 get_target_property(QtCore_location Qt5::Core LOCATION)
 get_filename_component(QT5_LIBPATH ${QtCore_location} PATH)
 file(GLOB Qt5Core_LIBRARIES "${QT5_LIBPATH}/libQt5Core.so*")
@@ -118,12 +69,6 @@ install(FILES ${Qt5Core_LIBRARIES} DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin/li
 install(FILES ${Qt5Gui_LIBRARIES} DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin/lib)
 install(FILES ${Qt5Widgets_LIBRARIES} DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin/lib)
 
-    
-#
-#        install(TARGETS ImageFrame
-#                RUNTIME DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin COMPONENT ${ImageMagick_LIBRARIES} #libraries
-#                LIBRARY DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin/lib COMPONENT ${ImageMagick_LIBRARIES}
-#                )
 endif (UNIX)
 
 #fixup_boundle
