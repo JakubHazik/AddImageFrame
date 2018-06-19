@@ -7,7 +7,7 @@ if(UNIX)
 	set(CMAKE_INSTALL_PREFIX ${IMAGE_FRAME_INSTALL_DIR}/bin/lib)
 	set(CMAKE_INSTALL_RPATH ${IMAGE_FRAME_INSTALL_DIR}/bin/lib)
 elseif(WIN32)
-	set(IMAGE_FRAME_INSTALL_DIR ${CMAKE_SOURCE_DIR})
+	set(IMAGE_FRAME_INSTALL_DIR ${CMAKE_SOURCE_DIR}/install)
 	set(CMAKE_INSTALL_PREFIX ${IMAGE_FRAME_INSTALL_DIR}/bin)
 	set(CMAKE_INSTALL_RPATH ${IMAGE_FRAME_INSTALL_DIR}/bin)
 endif()
@@ -26,7 +26,6 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -Wall)
 add_compile_options(-O4)
 
-
 # set source files
 set(INCLUDE_FILES
         include/ImageFrame/Gui.h
@@ -42,13 +41,12 @@ add_executable(ImageFrame
         ${INCLUDE_FILES}
         ${SOURCE_FILES})
 
-#https://stackoverflow.com/questions/41912734/deploy-icu-libraries-when-linking-a-cmake-project-with-qt5
 target_link_libraries(ImageFrame
         ${CMAKE_THREAD_LIBS_INIT}
         ${ImageMagick_LIBRARIES}
         Qt5::Core
-        Qt5::Widgets)
-
+        Qt5::Widgets
+		Qt5::Gui)
 
 if (UNIX)
 	install(PROGRAMS bin/ImageFrame
@@ -59,12 +57,12 @@ if (UNIX)
 
 	# install ImageMagick libraries
 	get_filename_component(ImageMagick_LIBPATH ${ImageMagick_LIBRARIES} PATH)
-	file(GLOB ImageMagickCore_LIBRARIES "${ImageMagick_LIBPATH}/libMagickCore-6.Q16.so*")
-	file(GLOB ImageMagickWand_LIBRARIES "${ImageMagick_LIBPATH}/libMagickWand-6.Q16.so*")
-	file(GLOB ImageMagick++_LIBRARIES "${ImageMagick_LIBPATH}/libMagick++-6.Q16.so*")
-	install(FILES ${ImageMagickCore_LIBRARIES} DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin/lib)
-	install(FILES ${ImageMagickWand_LIBRARIES} DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin/lib)
-	install(FILES ${ImageMagick++_LIBRARIES} DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin/lib)
+	file(GLOB ImageMagickCore_LIB "${ImageMagick_LIBPATH}/libMagickCore-6.Q16.so*")
+	file(GLOB ImageMagickWand_LIB "${ImageMagick_LIBPATH}/libMagickWand-6.Q16.so*")
+	file(GLOB ImageMagick++_LIB "${ImageMagick_LIBPATH}/libMagick++-6.Q16.so*")
+	install(FILES ${ImageMagickCore_LIB} DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin/lib)
+	install(FILES ${ImageMagickWand_LIB} DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin/lib)
+	install(FILES ${ImageMagick++_LIB} DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin/lib)
 
 	# install Qt libraries
 	get_target_property(QtCore_location Qt5::Core LOCATION)
@@ -78,19 +76,15 @@ if (UNIX)
 
 elseif(WIN32)
 	install(PROGRAMS bin/Release/ImageFrame.exe
-			DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin)
+			DESTINATION ${IMAGE_FRAME_INSTALL_DIR})
 
 	install(FILES icons/icon.png
-			DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/icons)
+			DESTINATION ${IMAGE_FRAME_INSTALL_DIR})
 
 	# install ImageMagick libraries
 	get_filename_component(ImageMagick_LIBPATH ${ImageMagick_LIBRARIES} PATH)
-	file(GLOB ImageMagickCore_LIBRARIES "${ImageMagick_LIBPATH}/../CORE_RL_Magick++_.dll")
-	file(GLOB ImageMagickWand_LIBRARIES "${ImageMagick_LIBPATH}/../CORE_RL_MagickCore_.dll")
-	file(GLOB ImageMagick++_LIBRARIES "${ImageMagick_LIBPATH}/../CORE_RL_MagickWand_.dll")
-	install(FILES ${ImageMagickCore_LIBRARIES} DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin)
-	install(FILES ${ImageMagickWand_LIBRARIES} DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin)
-	install(FILES ${ImageMagick++_LIBRARIES} DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin)
+	file(GLOB ImageMagick_LIBS "${ImageMagick_LIBPATH}/../CORE_RL*.dll")
+	install(FILES ${ImageMagick_LIBS} DESTINATION ${IMAGE_FRAME_INSTALL_DIR})
 	
 	# install Qt libraries
 	get_target_property(QtCore_location Qt5::Core LOCATION)
@@ -98,10 +92,9 @@ elseif(WIN32)
 	file(GLOB Qt5Core_LIBRARIES "${QT5_LIBPATH}/Qt5Core.dll")
 	file(GLOB Qt5Gui_LIBRARIES "${QT5_LIBPATH}/Qt5Gui.dll")
 	file(GLOB Qt5Widgets_LIBRARIES "${QT5_LIBPATH}/Qt5Widgets.dll")
-	install(FILES ${Qt5Core_LIBRARIES} DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin)
-	install(FILES ${Qt5Gui_LIBRARIES} DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin)
-	install(FILES ${Qt5Widgets_LIBRARIES} DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin)
-
+	install(FILES ${Qt5Core_LIBRARIES} DESTINATION ${IMAGE_FRAME_INSTALL_DIR})
+	install(FILES ${Qt5Gui_LIBRARIES} DESTINATION ${IMAGE_FRAME_INSTALL_DIR})
+	install(FILES ${Qt5Widgets_LIBRARIES} DESTINATION ${IMAGE_FRAME_INSTALL_DIR})
 endif()
 
 
@@ -121,3 +114,4 @@ endif()
 
 #deploy libraries WINDOWS
 # https://stackoverflow.com/questions/41193584/deploy-all-qt-dependencies-when-building
+

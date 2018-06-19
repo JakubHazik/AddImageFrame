@@ -14,8 +14,10 @@
 #include <QtGui/QPixmap>
 #include <sstream>
 #include <exception>
+#include <direct.h>
 
 #define ADD_TO_FILENAME "_ram"
+#define OUTPUT_DIR "ramceky/"
 #define NUM_OF_THREADS 8
 
 class ImgProcessing {

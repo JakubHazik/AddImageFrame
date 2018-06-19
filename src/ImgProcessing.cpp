@@ -7,6 +7,7 @@
 using namespace std;
 
 void ImgProcessing::addFrames(std::vector<std::string> filenames) {
+	mkdir(OUTPUT_DIR);
     vector<std::thread> threads;
 
     for (const auto &file : filenames) {
@@ -65,9 +66,9 @@ void ImgProcessing::addFrame(std::string filename,
 
     if (keepOldFiles) {
         //create new filename
-        size_t found = filename.rfind('.');
+        size_t found = filename.rfind('/') + 1;
         string new_filename = filename;
-        new_filename.insert(found, ADD_TO_FILENAME);
+		new_filename.insert(found, OUTPUT_DIR);
         image.write(new_filename);
     } else {
         image.write(filename);
