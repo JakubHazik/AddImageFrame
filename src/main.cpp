@@ -3,7 +3,7 @@
 //
 
 #include <Magick++.h>
-#include "ImageFrame/Gui.h"
+#include "ImageFrame/ui.h"
 
 using namespace std;
 using namespace Magick;
@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
     }
 #endif
 
-    Gui w;
+    MainWindow w;
     w.show();
     return QApplication::exec();
 }
