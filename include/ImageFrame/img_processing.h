@@ -7,24 +7,20 @@
 
 #include <iostream>
 #include <thread>
-#include <QtGui/QImage>
-#include <QImage>
-#include <QFile>
 #include <Magick++.h>
-#include <QtGui/QPixmap>
 #include <sstream>
 #include <exception>
+#include <future>
+#include <unistd.h>
 
 #define NUM_OF_THREADS 8
 
 class ImgProcessing {
 public:
 
-    void addFrames(const std::vector<std::string>& filenames);
+    void addFrames(std::vector<std::string> filenames);
 
     void setPercentage(const float &percentage);
-
-    void setKeepOldFiles(const bool &keep);
 
     void setFrameColor(const int &R, const int &G, const int &B);
 
@@ -38,12 +34,12 @@ public:
 
 private:
     void addFrame(const std::string& filepath);
+    std::atomic<int> running_threads;
 
     int R = 255, G = 255, B = 255;
     float percentage = 3;
     float image_w = 0;
     float image_h = 0;
-    bool keepOldFiles = true;
     std::string output_dir;
     std::string fileExtension = ".jpg";
 };

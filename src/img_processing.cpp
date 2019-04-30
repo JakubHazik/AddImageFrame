@@ -6,28 +6,33 @@
 
 using namespace std;
 
-void ImgProcessing::addFrames(const std::vector<std::string>& filenames) {
-    vector<std::thread> threads;
+void ImgProcessing::addFrames(std::vector<std::string> filenames) {
+    list<std::future<void>> threads;
 
-    for (const auto &file : filenames) {
-        if (threads.size() < NUM_OF_THREADS) {
-            threads.emplace_back(thread(&ImgProcessing::addFrame, this, file));
+//    for (auto & a:filenames) {
+//        cout<<a<<endl;
+//    }
+
+    running_threads = 0;
+
+    while (!filenames.empty()) {
+        if (running_threads < NUM_OF_THREADS) {
+            running_threads +=1;
+            threads.push_back(std::async(std::launch::async, &ImgProcessing::addFrame, this, filenames.back()));
+            filenames.pop_back();
         } else {
-            threads.front().join();
-            threads.erase(threads.begin());
+            usleep(1000*50);
         }
     }
-    for (auto &t : threads) {
-        t.join();
+
+    // wait until processing is completed
+    while (running_threads != 0) {
+        usleep(1000*5);
     }
 }
 
 void ImgProcessing::setPercentage(const float &percentage) {
     this->percentage = percentage;
-}
-
-void ImgProcessing::setKeepOldFiles(const bool &keep) {
-    this->keepOldFiles = keep;
 }
 
 void ImgProcessing::setFrameColor(const int &R, const int &G, const int &B) {
@@ -61,9 +66,11 @@ void ImgProcessing::addFrame(const std::string& filepath) {
     filename.replace(filename.rfind('.'), extensionSize, fileExtension);
     filename = filename.substr(filename.rfind('/') + 1);
 
+    image.write(output_dir + '/' + filename);
+
     cout << filename << " DONE " << endl;
 
-    image.write(output_dir + '/' + filename);
+    running_threads-=1;
 }
 
 void ImgProcessing::setFileExtension(const std::string &extension) {

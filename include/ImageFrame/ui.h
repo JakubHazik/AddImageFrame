@@ -11,7 +11,6 @@
 #include <QPushButton>
 #include <QFileDialog>
 #include "img_processing.h"
-#include "ImageFrame/img_processing.h"
 
 namespace Ui {
     class MainWindow;
