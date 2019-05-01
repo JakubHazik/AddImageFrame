@@ -2,11 +2,30 @@
 // Created by jakub on 12.5.2018.
 //
 
+
 #include "ImageFrame/ui.h"
 #include "../ui/ui_mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
+}
+
+void MainWindow::refresh() {
+    progressBar->setValue(progress);
+
+    if (processingDone.isFinished()) {
+        // successful processed
+        ui->centralwidget->setDisabled(false);
+        delete progressBar;
+        delete cancelBtn;
+        ui->textOutput->clear();
+        if (cancelProcessing) {
+            ui->textOutput->append(">>> Processing aborted <<<");
+        } else {
+            ui->textOutput->append(">>> Successful processed <<<");
+        }
+        timer.stop();
+    }
 }
 
 void MainWindow::on_browse_btn_clicked() {
@@ -25,61 +44,162 @@ void MainWindow::on_browse_btn_clicked() {
 }
 
 void MainWindow::on_render_btn_clicked() {
-    QString output_directory = QFileDialog::getExistingDirectory(this, "Output directory", QDir::currentPath(), QFileDialog::ShowDirsOnly);
-    ui->textOutput->append("Output directory: " + output_directory);
-    if (output_directory == "") {
-        return;
-    }
-
-    // set output directory
-    imgProcessing.setOutputDir(output_directory.toStdString());
-
     // check if any file is added
     if (inputFiles.empty()) {
         QMessageBox msgBox;
+        msgBox.setIcon(QMessageBox::Icon::Warning);
         msgBox.setText("No input files for rendering");
         msgBox.exec();
         return;
     }
 
-    ui->textOutput->clear();
-    ui->textOutput->append(">>> Processing <<<");
-
-    // set image size
-    imgProcessing.setImageSize(ui->imageWidth->text().toFloat(), ui->imageHeight->text().toFloat());
-
     // set percentage or absolute width of frame for processing
     if (ui->percentage_rbtn->isChecked()) {
-        imgProcessing.setPercentage(ui->percentageInput->text().toFloat());
+        framePercentage = ui->percentageInput->text().toFloat();
+        if (framePercentage < 0) {
+            QMessageBox msgBox;
+            msgBox.setIcon(QMessageBox::Icon::Critical);
+            msgBox.setText("Wrong percentage value");
+            msgBox.exec();
+            return;
+        }
+
     }else if (ui->absolute_rbtn->isChecked()) {
-        imgProcessing.setFrameWidth(ui->frameWidth->text().toFloat());
+        float imgWidth = ui->imageWidth->text().toFloat();
+        if (imgWidth < 1) {
+            QMessageBox msgBox;
+            msgBox.setIcon(QMessageBox::Icon::Critical);
+            msgBox.setText("Wrong image width");
+            msgBox.exec();
+            return;
+        }
+
+        float frameWidth = ui->frameWidth->text().toFloat();
+        if (frameWidth < 0) {
+            QMessageBox msgBox;
+            msgBox.setIcon(QMessageBox::Icon::Critical);
+            msgBox.setText("Wrong frame width");
+            msgBox.exec();
+            return;
+        }
+
+        framePercentage = 100*frameWidth/imgWidth;
     }
 
-    // set file extension
-    imgProcessing.setFileExtension(ui->fileExtension->text().toStdString());
+    fileExtension = '.' + ui->fileExtension->currentText().toStdString();
 
+    output_directory = QFileDialog::getExistingDirectory(this, "Output directory", QDir::currentPath(), QFileDialog::ShowDirsOnly).toStdString();
+    if (output_directory.empty()) {
+        QMessageBox msgBox;
+        msgBox.setIcon(QMessageBox::Icon::Warning);
+        msgBox.setText("No output directory for rendering");
+        msgBox.exec();
+        return;
+    }
 
     // prepare filenames and process them
     std::vector<std::string> files;
     for (const auto &file : inputFiles) {
         files.push_back(file.toStdString());
     }
-    imgProcessing.addFrames(files);
 
-    // successful processed
     ui->textOutput->clear();
-    ui->textOutput->append(">>> Successful processed <<<");
+    ui->textOutput->append(">>> Processing <<<");
+
+    processingDone = QtConcurrent::run(this, &MainWindow::processImages, files);
+
+    // disable UI
+    ui->centralwidget->setDisabled(true);
+    ui->quit_btn->setDisabled(false);
+
+    // start waiting timer
+    connect(&timer, SIGNAL(timeout()), this, SLOT(refresh()));
+    timer.start(100);
+
+    // create progress bar
+    progressBar = new QProgressBar();
+    progressBar->setRange(0, files.size());
+    progressBar->setTextVisible(true);
+    progressBar->setFormat("Processing");
+    ui->statusBar->addPermanentWidget(progressBar, 2);
+
+    // create abort processing button
+    cancelBtn = new QPushButton();
+    cancelBtn->setText("Abort");
+    connect(cancelBtn, &QPushButton::clicked, this, [&](){
+        cancelProcessing = true;
+    });
+    ui->statusBar->addPermanentWidget(cancelBtn, 0);
 }
 
 void MainWindow::on_color_btn_clicked() {
     auto *c = new QColorDialog();
     c->exec();
-    imgProcessing.setFrameColor(c->selectedColor().red(), c->selectedColor().green(), c->selectedColor().blue());
-    std::cout<<c->selectedColor().red()<<std::endl;
-    std::cout<<c->selectedColor().green()<<std::endl;
-    std::cout<<c->selectedColor().blue()<<std::endl;
+    frameColor = c->selectedColor();
 }
 
 void MainWindow::on_quit_btn_clicked() {
     QCoreApplication::quit();
+}
+
+void MainWindow::addFrame(std::string filepath) {
+    Magick::Image image;
+    // Read a file into image object
+    image.read(filepath);
+
+    auto size = image.size();
+
+    int w_additional_px = static_cast<int>( size.width() * framePercentage / 100);
+    int h_additional_px = static_cast<int>( size.height() * framePercentage / 100);
+
+    std::stringstream ss;
+    ss << w_additional_px << "x" << h_additional_px << "+0+0";
+
+    Magick::ColorRGB color(frameColor.red(), frameColor.green(), frameColor.blue());
+    image.borderColor(color);
+    image.border(ss.str());
+
+    // edit file extension
+    int extensionSize = static_cast<int>(filepath.length() - filepath.rfind('.'));
+    filepath.replace(filepath.rfind('.'), extensionSize, fileExtension);
+    filepath = filepath.substr(filepath.rfind('/') + 1);
+
+    image.write(output_directory + '/' + filepath);
+
+    std::cout << filepath << " DONE " << std::endl;
+}
+
+void MainWindow::processImages(std::vector<std::string> filepaths) {
+    std::list<QFuture<void>> threads;
+
+    progress = 0;
+    cancelProcessing = false;
+
+    while (!filepaths.empty()) {
+        if (cancelProcessing) {
+            break;
+        }
+
+        if (threads.size() < NUM_OF_THREADS) {
+            threads.push_back(QtConcurrent::run(this, &MainWindow::addFrame,  filepaths.back()));
+            filepaths.pop_back();
+            progress++;
+        } else {
+            for (auto it = threads.begin(); it != threads.end(); it++) {
+                if(it->isFinished()) {
+                    it = threads.erase(it);
+                }
+            }
+            QThread::msleep(50);
+        }
+    }
+
+    while (!threads.empty()) {
+        for (auto it = threads.begin(); it != threads.end(); it++) {
+            if (it->isFinished()) {
+                it = threads.erase(it);
+            }
+        }
+        QThread::msleep(50);
+    }
 }

@@ -30,11 +30,9 @@ add_compile_options(-O4)
 
 # set source files
 set(INCLUDE_FILES
-		include/ImageFrame/ui.h
-		include/ImageFrame/img_processing.h)
+		include/ImageFrame/ui.h)
 set(SOURCE_FILES
-		src/ui.cpp
-		src/img_processing.cpp)
+		src/ui.cpp)
 set(UI_SOURCES
         ui/mainwindow.ui)
 
