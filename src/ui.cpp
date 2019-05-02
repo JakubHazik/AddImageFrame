@@ -16,8 +16,8 @@ void MainWindow::refresh() {
     if (processingDone.isFinished()) {
         // successful processed
         ui->centralwidget->setDisabled(false);
-        delete progressBar;
-        delete cancelBtn;
+        progressBar->deleteLater();
+        cancelBtn->deleteLater();
         ui->textOutput->clear();
         if (cancelProcessing) {
             ui->textOutput->append(">>> Processing aborted <<<");
@@ -117,14 +117,14 @@ void MainWindow::on_render_btn_clicked() {
     timer.start(100);
 
     // create progress bar
-    progressBar = new QProgressBar();
+    progressBar = new QProgressBar(ui->statusBar);
     progressBar->setRange(0, files.size());
     progressBar->setTextVisible(true);
     progressBar->setFormat("Processing");
     ui->statusBar->addPermanentWidget(progressBar, 2);
 
     // create abort processing button
-    cancelBtn = new QPushButton();
+    cancelBtn = new QPushButton(ui->statusBar);
     cancelBtn->setText("Abort");
     connect(cancelBtn, &QPushButton::clicked, this, [&](){
         cancelProcessing = true;

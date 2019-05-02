@@ -80,7 +80,7 @@ if (UNIX)
 	install(FILES ${Qt5Widgets_LIBRARIES} DESTINATION ${IMAGE_FRAME_INSTALL_DIR}/bin/lib)
 
 elseif(WIN32)
-	install(PROGRAMS bin/Release/ImageFrame.exe
+	install(PROGRAMS "${CMAKE_CURRENT_BINARY_DIR}/ImageFrame.exe"
 			DESTINATION ${IMAGE_FRAME_INSTALL_DIR})
 
 	install(FILES icons/icon.png
@@ -93,13 +93,21 @@ elseif(WIN32)
 	
 	# install Qt libraries
 	get_target_property(QtCore_location Qt5::Core LOCATION)
-	get_filename_component(QT5_LIBPATH ${QtCore_location} PATH)
-	file(GLOB Qt5Core_LIBRARIES "${QT5_LIBPATH}/Qt5Core.dll")
-	file(GLOB Qt5Gui_LIBRARIES "${QT5_LIBPATH}/Qt5Gui.dll")
-	file(GLOB Qt5Widgets_LIBRARIES "${QT5_LIBPATH}/Qt5Widgets.dll")
-	install(FILES ${Qt5Core_LIBRARIES} DESTINATION ${IMAGE_FRAME_INSTALL_DIR})
-	install(FILES ${Qt5Gui_LIBRARIES} DESTINATION ${IMAGE_FRAME_INSTALL_DIR})
-	install(FILES ${Qt5Widgets_LIBRARIES} DESTINATION ${IMAGE_FRAME_INSTALL_DIR})
+	get_target_property(QtGui_location Qt5::Gui LOCATION)
+	get_target_property(QtWidget_location Qt5::Widgets LOCATION)
+	get_target_property(QWindowsPlugin Qt5::QWindowsIntegrationPlugin LOCATION)
+	install(FILES ${QtCore_location} DESTINATION ${IMAGE_FRAME_INSTALL_DIR})
+	install(FILES ${QtGui_location} DESTINATION ${IMAGE_FRAME_INSTALL_DIR})
+	install(FILES ${QtWidget_location} DESTINATION ${IMAGE_FRAME_INSTALL_DIR})	
+	install(FILES ${QWindowsPlugin} DESTINATION ${IMAGE_FRAME_INSTALL_DIR})
+
+	# for 64bit
+	install(FILES C:/Windows/System32/msvcp120.dll DESTINATION ${IMAGE_FRAME_INSTALL_DIR})
+	install(FILES C:/Windows/System32/msvcr120.dll DESTINATION ${IMAGE_FRAME_INSTALL_DIR})
+
+	# for 32bit
+	#install(FILES C:/Windows/SysWOW64/msvcp120.dll DESTINATION ${IMAGE_FRAME_INSTALL_DIR})
+	#install(FILES C:/Windows/SysWOW64/msvcr120.dll DESTINATION ${IMAGE_FRAME_INSTALL_DIR})
 endif()
 
 

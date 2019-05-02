@@ -8,7 +8,6 @@
 #include <iostream>
 #include <Magick++.h>
 #include <sstream>
-#include <unistd.h>
 #include <future>
 
 #include <QtWidgets>
