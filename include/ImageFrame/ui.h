@@ -18,8 +18,6 @@
 #include <QFuture>
 #include <QThread>
 
-#define NUM_OF_THREADS 8
-
 namespace Ui {
     class MainWindow;
 }
@@ -38,24 +36,27 @@ private slots:
     void refresh();
 
 private:
+    Ui::MainWindow *ui;
+
+    bool check_before_render();
     void addFrame(std::string filepath);
     void processImages(std::vector<std::string> filepaths);
 
     QTimer timer;
-    std::string output_directory;
-    Ui::MainWindow *ui;
-
     QFuture<void> processingDone;
     QStringList inputFiles;
     std::atomic_uint_fast16_t progress;
+    std::atomic<bool> cancelProcessing;
+    std::string output_directory;
 
+    QMutex hdd_IO_mutex;            // only one process can access IO HDD
     QProgressBar * progressBar;
     QPushButton *cancelBtn;
     float framePercentage;
     std::string fileExtension;
     QColor frameColor = QColor("white");
-    std::atomic<bool> cancelProcessing;
 
+    const unsigned short num_of_threads = QThread::idealThreadCount();
 };
 
 #endif //IMAGEFRAME_WIN_H

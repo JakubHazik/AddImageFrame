@@ -145,7 +145,9 @@ void MainWindow::on_quit_btn_clicked() {
 void MainWindow::addFrame(std::string filepath) {
     Magick::Image image;
     // Read a file into image object
+    hdd_IO_mutex.lock();
     image.read(filepath);
+    hdd_IO_mutex.unlock();
 
     auto size = image.size();
 
@@ -164,7 +166,9 @@ void MainWindow::addFrame(std::string filepath) {
     filepath.replace(filepath.rfind('.'), extensionSize, fileExtension);
     filepath = filepath.substr(filepath.rfind('/') + 1);
 
+    hdd_IO_mutex.lock();
     image.write(output_directory + '/' + filepath);
+    hdd_IO_mutex.unlock();
 
     std::cout << filepath << " DONE " << std::endl;
 }
@@ -180,7 +184,7 @@ void MainWindow::processImages(std::vector<std::string> filepaths) {
             break;
         }
 
-        if (threads.size() < NUM_OF_THREADS) {
+        if (threads.size() < num_of_threads) {
             threads.push_back(QtConcurrent::run(this, &MainWindow::addFrame,  filepaths.back()));
             filepaths.pop_back();
             progress++;
