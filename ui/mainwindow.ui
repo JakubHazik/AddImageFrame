@@ -61,7 +61,7 @@
         <item>
          <widget class="QLabel" name="label_5">
           <property name="text">
-           <string>File extension</string>
+           <string>Output files extension</string>
           </property>
          </widget>
         </item>

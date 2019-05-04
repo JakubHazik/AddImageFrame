@@ -38,7 +38,7 @@ private slots:
 private:
     Ui::MainWindow *ui;
 
-    bool check_before_render();
+//    bool check_before_render();
     void addFrame(std::string filepath);
     void processImages(std::vector<std::string> filepaths);
 
@@ -48,6 +48,7 @@ private:
     std::atomic_uint_fast16_t progress;
     std::atomic<bool> cancelProcessing;
     std::string output_directory;
+    unsigned int imagesNum;
 
     QMutex hdd_IO_mutex;            // only one process can access IO HDD
     QProgressBar * progressBar;

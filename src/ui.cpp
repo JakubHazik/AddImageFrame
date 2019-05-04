@@ -13,6 +13,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 void MainWindow::refresh() {
     progressBar->setValue(progress);
 
+    QString progressMsg;
+    progressMsg.sprintf("Processing [%d/%d]", static_cast<int>(progress), imagesNum);
+    progressBar->setFormat(progressMsg);
+
+
     if (processingDone.isFinished()) {
         // successful processed
         ui->centralwidget->setDisabled(false);
@@ -106,6 +111,7 @@ void MainWindow::on_render_btn_clicked() {
     ui->textOutput->clear();
     ui->textOutput->append(">>> Processing <<<");
 
+    // run rendering process asynchonous
     processingDone = QtConcurrent::run(this, &MainWindow::processImages, files);
 
     // disable UI
@@ -169,13 +175,14 @@ void MainWindow::addFrame(std::string filepath) {
     hdd_IO_mutex.lock();
     image.write(output_directory + '/' + filepath);
     hdd_IO_mutex.unlock();
-
+    
     std::cout << filepath << " DONE " << std::endl;
 }
 
 void MainWindow::processImages(std::vector<std::string> filepaths) {
     std::list<QFuture<void>> threads;
 
+    imagesNum = filepaths.size();
     progress = 0;
     cancelProcessing = false;
 
@@ -187,11 +194,12 @@ void MainWindow::processImages(std::vector<std::string> filepaths) {
         if (threads.size() < num_of_threads) {
             threads.push_back(QtConcurrent::run(this, &MainWindow::addFrame,  filepaths.back()));
             filepaths.pop_back();
-            progress++;
+
         } else {
             for (auto it = threads.begin(); it != threads.end(); it++) {
                 if(it->isFinished()) {
                     it = threads.erase(it);
+                    progress++;
                 }
             }
             QThread::msleep(50);
@@ -202,6 +210,7 @@ void MainWindow::processImages(std::vector<std::string> filepaths) {
         for (auto it = threads.begin(); it != threads.end(); it++) {
             if (it->isFinished()) {
                 it = threads.erase(it);
+                progress++;
             }
         }
         QThread::msleep(50);
