@@ -8,6 +8,8 @@
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
+    connect(this, SIGNAL(overwriteFilesQuestion_signal(QString)), this, SLOT(overwriteFilesQuestion(QString)),Qt::BlockingQueuedConnection);
+    connect(this, SIGNAL(printLog_signal(QString)), this, SLOT(printLog(QString)));
 }
 
 void MainWindow::refresh() {
@@ -17,17 +19,13 @@ void MainWindow::refresh() {
     progressMsg.sprintf("Processing [%d/%d]", static_cast<int>(progress), imagesNum);
     progressBar->setFormat(progressMsg);
 
-
     if (processingDone.isFinished()) {
         // successful processed
-        ui->centralwidget->setDisabled(false);
+        disableUI(false);
         progressBar->deleteLater();
         cancelBtn->deleteLater();
-        ui->textOutput->clear();
         if (cancelProcessing) {
-            ui->textOutput->append(">>> Processing aborted <<<");
-        } else {
-            ui->textOutput->append(">>> Successful processed <<<");
+            emit printLog_signal(">>> Processing aborted");
         }
         timer.stop();
     }
@@ -41,7 +39,7 @@ void MainWindow::on_browse_btn_clicked() {
             "Images (*.png *.jpg)");
 
     ui->textOutput->clear();
-    ui->textOutput->append("Inputed images:");
+    emit printLog_signal(">>> Input images:");
     for (const auto &s:inputFiles) {
         QStringList path = s.split("/");
         ui->textOutput->append(path.back());
@@ -108,15 +106,13 @@ void MainWindow::on_render_btn_clicked() {
         files.push_back(file.toStdString());
     }
 
-    ui->textOutput->clear();
-    ui->textOutput->append(">>> Processing <<<");
+    emit printLog_signal(">>> Processing");
 
     // run rendering process asynchonous
     processingDone = QtConcurrent::run(this, &MainWindow::processImages, files);
 
     // disable UI
-    ui->centralwidget->setDisabled(true);
-    ui->quit_btn->setDisabled(false);
+    disableUI(true);
 
     // start waiting timer
     connect(&timer, SIGNAL(timeout()), this, SLOT(refresh()));
@@ -126,13 +122,14 @@ void MainWindow::on_render_btn_clicked() {
     progressBar = new QProgressBar(ui->statusBar);
     progressBar->setRange(0, files.size());
     progressBar->setTextVisible(true);
-    progressBar->setFormat("Processing");
     ui->statusBar->addPermanentWidget(progressBar, 2);
 
     // create abort processing button
     cancelBtn = new QPushButton(ui->statusBar);
     cancelBtn->setText("Abort");
     connect(cancelBtn, &QPushButton::clicked, this, [&](){
+        emit printLog_signal(">>> Aborting ...");
+        cancelBtn->setDisabled(true);
         cancelProcessing = true;
     });
     ui->statusBar->addPermanentWidget(cancelBtn, 0);
@@ -148,11 +145,12 @@ void MainWindow::on_quit_btn_clicked() {
     QCoreApplication::quit();
 }
 
-void MainWindow::addFrame(std::string filepath) {
+void MainWindow::addFrame(std::string inputFilepath, std::string outputFilepath) {
     Magick::Image image;
+
     // Read a file into image object
     hdd_IO_mutex.lock();
-    image.read(filepath);
+    image.read(inputFilepath);
     hdd_IO_mutex.unlock();
 
     auto size = image.size();
@@ -167,16 +165,12 @@ void MainWindow::addFrame(std::string filepath) {
     image.borderColor(color);
     image.border(ss.str());
 
-    // edit file extension
-    int extensionSize = static_cast<int>(filepath.length() - filepath.rfind('.'));
-    filepath.replace(filepath.rfind('.'), extensionSize, fileExtension);
-    filepath = filepath.substr(filepath.rfind('/') + 1);
-
     hdd_IO_mutex.lock();
-    image.write(output_directory + '/' + filepath);
+    image.write(outputFilepath);
     hdd_IO_mutex.unlock();
-    
-    std::cout << filepath << " DONE " << std::endl;
+
+    // log to text output
+    emit printLog_signal(getFileNameFromPath(outputFilepath) + " DONE");
 }
 
 void MainWindow::processImages(std::vector<std::string> filepaths) {
@@ -192,7 +186,23 @@ void MainWindow::processImages(std::vector<std::string> filepaths) {
         }
 
         if (threads.size() < num_of_threads) {
-            threads.push_back(QtConcurrent::run(this, &MainWindow::addFrame,  filepaths.back()));
+            std::string outputFilepath = getOutputFilePath(filepaths.back());
+
+            if (!overwriteAll && fileExists(outputFilepath)) {
+                int userDecision = emit overwriteFilesQuestion_signal(getFileNameFromPath(outputFilepath));
+
+                if (userDecision == QMessageBox::YesToAll) {
+                    emit printLog_signal(">>> All files will be overwrote");
+                    overwriteAll = true;
+                } else if (userDecision == QMessageBox::Abort) {
+                    emit printLog_signal(">>> Processing aborted");
+                    return;
+                } else if (userDecision == QMessageBox::Yes) {
+                    // continue in processing
+                }
+            }
+
+            threads.push_back(QtConcurrent::run(this, &MainWindow::addFrame,  filepaths.back(), outputFilepath));
             filepaths.pop_back();
 
         } else {
@@ -215,4 +225,46 @@ void MainWindow::processImages(std::vector<std::string> filepaths) {
         }
         QThread::msleep(50);
     }
+
+    emit printLog_signal(">>> Successful processed");
+}
+
+std::string MainWindow::getOutputFilePath(std::string inputFilepath) {
+    // edit file extension
+    int extensionSize = static_cast<int>(inputFilepath.length() - inputFilepath.rfind('.'));
+    inputFilepath.replace(inputFilepath.rfind('.'), extensionSize, fileExtension);
+    inputFilepath = inputFilepath.substr(inputFilepath.rfind('/') + 1);
+    return output_directory + '/' + inputFilepath;
+}
+
+int MainWindow::overwriteFilesQuestion(QString filename) {
+    QMessageBox msgBox;
+    msgBox.setText("Do you wan to overwrite file: " + filename);
+    msgBox.setIcon(QMessageBox::Icon::Question);
+    msgBox.setStandardButtons(QMessageBox::YesAll | QMessageBox::Yes | QMessageBox::Abort);
+    return msgBox.exec();
+}
+
+void MainWindow::printLog(QString msg) {
+    ui->textOutput->append(msg);
+}
+
+void MainWindow::disableUI(bool disable) {
+    ui->fileExtension->setDisabled(disable);
+    ui->browse_btn->setDisabled(disable);
+    ui->color_btn->setDisabled(disable);
+    ui->groupBox->setDisabled(disable);
+    ui->render_btn->setDisabled(disable);
+    ui->quit_btn->setDisabled(disable);
+}
+
+bool MainWindow::fileExists(std::string filepath) {
+    QFileInfo check_file(QString::fromStdString(filepath));
+    return (check_file.exists() && check_file.isFile());
+}
+
+QString MainWindow::getFileNameFromPath(std::string filepath) {
+    auto delimiter = filepath.rfind('/') + 1;
+    std::string fileName = filepath.substr(delimiter, filepath.length() - delimiter);
+    return QString::fromStdString(fileName);
 }

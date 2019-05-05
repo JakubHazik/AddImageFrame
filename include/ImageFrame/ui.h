@@ -17,6 +17,7 @@
 #include <QtConcurrent/QtConcurrent>
 #include <QFuture>
 #include <QThread>
+#include <QFileInfo>
 
 namespace Ui {
     class MainWindow;
@@ -28,19 +29,28 @@ Q_OBJECT
 public:
     explicit MainWindow(QWidget *parent = nullptr);
 
-private slots:
+private Q_SLOTS:
     void on_browse_btn_clicked();
     void on_color_btn_clicked();
     void on_render_btn_clicked();
     void on_quit_btn_clicked();
     void refresh();
+    int overwriteFilesQuestion(QString filename);
+    void printLog(QString msg);
+
+Q_SIGNALS:
+    int overwriteFilesQuestion_signal(QString filename);
+    void printLog_signal(QString msg);
 
 private:
     Ui::MainWindow *ui;
 
-//    bool check_before_render();
-    void addFrame(std::string filepath);
+    void addFrame(std::string inputFilepath, std::string outputFilepath);
     void processImages(std::vector<std::string> filepaths);
+    std::string getOutputFilePath(std::string inputFilePath);
+    void disableUI(bool disable);
+    bool fileExists(std::string filepath);
+    QString getFileNameFromPath(std::string filepath);
 
     QTimer timer;
     QFuture<void> processingDone;
@@ -56,6 +66,8 @@ private:
     float framePercentage;
     std::string fileExtension;
     QColor frameColor = QColor("white");
+
+    bool overwriteAll = false;
 
     const unsigned short num_of_threads = QThread::idealThreadCount();
 };
