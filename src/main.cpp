@@ -4,8 +4,8 @@
 
 #include <Magick++.h>
 #include "ImageFrame/ui.h"
+#include <build_defines.h>
 
-using namespace std;
 using namespace Magick;
 
 int main(int argc, char *argv[]) {
@@ -13,10 +13,12 @@ int main(int argc, char *argv[]) {
 
 #ifdef __linux__
     try{
-        QApplication::setWindowIcon(QIcon("/usr/local/bin/icons/icon.png"));
+        QApplication::setWindowIcon(QIcon(install_dir + "icons/icon.png"));
     } catch (...){
-        std::cout<<"Icon not found"<<endl;
+        std::cout<<"Icon not found"<<std::endl;
     }
+#elif __WIN__
+
 #endif
 
     MainWindow w;

@@ -1,0 +1,12 @@
+//
+// Created by jakub on 6.5.2019.
+//
+
+#ifndef IMAGEFRAME_BUILD_DEFINES_H_IN
+#define IMAGEFRAME_BUILD_DEFINES_H_IN
+
+#include <QString>
+
+const QString install_dir = "@IMAGE_FRAME_INSTALL_DIR@/";
+
+#endif //IMAGEFRAME_BUILD_DEFINES_H_IN
