@@ -4,3 +4,9 @@
 bin/
 
 cmake-build-debug/
+
+\.vs/
+
+CMakeSettings\.json
+
+build/
